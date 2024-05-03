@@ -1,5 +1,7 @@
 # Einfache Auth Express App
 
+![](./documentation/images/Workflow_JWT.png)
+
 Aufgabe 1 ist die Mindestabgabe. Aufgabe 2 + 3 sind die Zusatzaufgaben
 
 Erstellt bitte eure eigenen Repos aus meinem
