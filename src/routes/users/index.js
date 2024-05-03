@@ -6,8 +6,24 @@ const UserRouter = Router();
 
 // GET REQUESTS
 UserRouter.get("/currentuser", async (req, res) => {
-  // TODO: der Nutzer soll basierend auf der userId aus dem Token ermittelt werden
-  res.send("Ich bin nur ein Platzhalter");
+  try {
+    const userId = req.user.id;
+
+    const user = await UserModel.findByPk(userId);
+
+    if (!user) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ error: "Usuario no encontrado" });
+    }
+
+    res.status(StatusCodes.OK).json(user);
+  } catch (error) {
+    console.error("Error al obtener el usuario actual:", error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: ReasonPhrases.INTERNAL_SERVER_ERROR });
+  }
 });
 
 module.exports = { UserRouter };

@@ -1,26 +1,61 @@
 const { Router } = require("express");
 const { StatusCodes, ReasonPhrases } = require("http-status-codes");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const User = require("../../../src/database/models/UserModel");
 
 const AuthRouter = Router();
 
-// POST REQUESTS
-
 AuthRouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  // TODO: Login basierend auf email/password
-  // Token soll erstellt werden und zurückgegeben werden
-  res.send("Ich bin nur ein Platzhalter");
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: "Correo electrónico o contraseña incorrectos" });
+    }
+
+    const token = jwt.sign({ userId: user._id }, "secretKey", {
+      expiresIn: "1h",
+    });
+
+    // Enviar el token como respuesta
+    res.status(StatusCodes.OK).json({ token });
+  } catch (error) {
+    console.error("Error al iniciar sesión:", error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Error interno del servidor" });
+  }
 });
 
 AuthRouter.post("/signup", async (req, res) => {
   const { email, password, name, profileImgUrl } = req.body;
-  if (!email || !password || !name || !profileImgUrl) {
-    res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
-    return;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      name,
+      profileImgUrl,
+    });
+    await newUser.save();
+
+    const token = jwt.sign({ userId: newUser._id }, "secretKey", {
+      expiresIn: "1h",
+    });
+
+    res.status(StatusCodes.CREATED).json({ token });
+  } catch (error) {
+    console.error("Error al registrarse:", error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Error interno del servidor" });
   }
-  // TODO: Signup basierend auf email, password, name, profileImgUrl
-  // Token soll erstellt werden und zurückgegeben werden
-  res.send("Ich bin nur ein Platzhalter");
 });
 
 module.exports = { AuthRouter };
