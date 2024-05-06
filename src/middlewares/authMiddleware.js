@@ -1,22 +1,19 @@
-const jwt = require("jsonwebtoken");
 const { StatusCodes } = require("http-status-codes");
 const UserModel = require("../database/models/UserModel");
+const { decodeAccessToken } = require("./jwtUtils");
 
 async function authMiddleWare(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
+    const token = req.headers["x-access-token"];
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!token) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json({ message: "Token de acceso no proporcionado" });
     }
 
-    const token = authHeader.split(" ")[1];
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const userId = decoded.userId;
+    const decodedToken = decodeAccessToken(token);
+    const userId = decodedToken.userId;
 
     const user = await UserModel.findById(userId);
 
