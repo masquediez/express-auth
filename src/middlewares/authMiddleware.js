@@ -1,37 +1,21 @@
-const { StatusCodes } = require("http-status-codes");
-const UserModel = require("../database/models/UserModel");
-const { decodeAccessToken } = require("./jwtUtils");
+const { StatusCodes, ReasonPhrases } = require("http-status-codes");
+const AccessTokens = require("../services/auth/AccessToken");
 
-async function authMiddleWare(req, res, next) {
-  try {
-    const token = req.headers["x-access-token"];
-
-    if (!token) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Token de acceso no proporcionado" });
-    }
-
-    const decodedToken = decodeAccessToken(token);
-    const userId = decodedToken.userId;
-
-    const user = await UserModel.findById(userId);
-
-    if (!user) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: "Usuario no encontrado" });
-    }
-
-    req.user = user;
-
-    next();
-  } catch (error) {
-    console.error("Error de autenticación:", error);
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "Token de acceso inválido o expirado" });
+function authMiddleWare(req, res, next) {
+  const token = req.headers["x-access-token"];
+  if (!token) {
+    return res.status(StatusCodes.FORBIDDEN).send("No Token provided!");
   }
+  try {
+    const decodedAccessToken = AccessTokens.decodeAccessToken(token);
+    req.user = decodedAccessToken;
+  } catch (e) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .send("Something is wrong with your token");
+  }
+
+  return next();
 }
 
 module.exports = authMiddleWare;

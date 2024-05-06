@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const { StatusCodes, ReasonPhrases } = require("http-status-codes");
+const TodoModel = require("../../database/models/TodoModel");
 const UserModel = require("../../database/models/UserModel");
 const AccessTokens = require("../../services/auth/AccessToken");
 
@@ -13,13 +14,12 @@ AuthRouter.post("/login", async (req, res) => {
     res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
     return;
   }
-  const user = await UserModel.scope("allData").findOne({ where: { email } });
+  const user = await UserModel.findOne({ where: { email } });
 
   if (user.password !== password) {
     res.status(StatusCodes.UNAUTHORIZED).send(ReasonPhrases.UNAUTHORIZED);
     return;
   }
-  user.password = null;
 
   const myToken = AccessTokens.createAccessToken(user.id);
 
@@ -27,13 +27,12 @@ AuthRouter.post("/login", async (req, res) => {
 });
 
 AuthRouter.post("/signup", async (req, res) => {
-  const { email, password, name, profileImgUrl } = req.body;
-  if (!email || !password || !name || !profileImgUrl) {
+  const { email, password, name } = req.body;
+  if (!email || !password || !name) {
     res.status(StatusCodes.BAD_REQUEST).send(ReasonPhrases.BAD_REQUEST);
     return;
   }
-  const user = await UserModel.create({ email, password, name, profileImgUrl });
-  user.password = null;
+  const user = await UserModel.create({ email, password, name });
   const myToken = AccessTokens.createAccessToken(user.id);
   res.status(StatusCodes.OK).json({ user, tokens: { accessToken: myToken } });
 });

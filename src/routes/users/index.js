@@ -6,24 +6,18 @@ const UserRouter = Router();
 
 // GET REQUESTS
 UserRouter.get("/currentuser", async (req, res) => {
-  try {
-    const userId = req.user.id;
+  const userId = req.user.userId;
 
-    const user = await UserModel.findByPk(userId);
+  console.log("userId", userId);
 
-    if (!user) {
-      return res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ error: "Usuario no encontrado" });
-    }
+  const user = await UserModel.findOne({ where: { id: userId } });
 
-    res.status(StatusCodes.OK).json(user);
-  } catch (error) {
-    console.error("Error al obtener el usuario actual:", error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: ReasonPhrases.INTERNAL_SERVER_ERROR });
+  if (!user) {
+    res.status(StatusCodes.NOT_FOUND).send(ReasonPhrases.NOT_FOUND);
+    return;
   }
+
+  res.status(StatusCodes.OK).json({ user });
 });
 
 module.exports = { UserRouter };
