@@ -13,6 +13,6 @@ RUN npm install
 # Kopiren des lokalen codes in das Container image.
 COPY . .
 
-CMD ["node", "index.js"]
+CMD ["node", "server.js"]
 
 EXPOSE 5151
